@@ -13,9 +13,10 @@ type DriverService interface {
 	GetDriverByID(id uuid.UUID) (*model.Driver, error)
 	GetDriverByUserID(useID uuid.UUID) (*model.Driver, error)
 	ApproveDriver(id uuid.UUID) error
-	RejectDriver(id uuid.UUID) error
+	RejectDriver(id uuid.UUID, message string) error
 	UpdateDriver(driver *model.Driver) error
 	DeleteDriver(id uuid.UUID) error
+	UpdateStatus(id uuid.UUID, status string) error
 }
 
 type driverService struct {
@@ -29,18 +30,22 @@ func NewDriverService(repo repository.DriverRepository) DriverService {
 }
 
 func (s *driverService) RegisterDriver(req *model.Driver) (*model.Driver, error) {
-	exists, _ := s.repo.FindByUserID(req.UserID)
-
-	if exists != nil {
-		return nil, appErr.NewBadRequest("Driver already registered")
-	}
-
-	req.Status = "pending"
-
-	err := s.repo.Create(req)
+	existing, err := s.repo.FindByPhone(req.Phone)
 	if err != nil {
 		return nil, err
 	}
+
+	if existing != nil {
+		return nil, appErr.NewBadRequest("phone alreadey registered as driver")
+	}
+
+	req.Status = "pending"
+	req.IsOnline = false
+
+	if err = s.repo.Create(req); err != nil {
+		return nil, err
+	}
+
 	return req, nil
 
 }
@@ -62,15 +67,19 @@ func (s *driverService) GetDriverByUserID(userID uuid.UUID) (*model.Driver, erro
 }
 
 func (s *driverService) ApproveDriver(id uuid.UUID) error {
-	return s.repo.UpdateStatus(id, "approved")
+	return s.repo.UpdateStatus(id, "Approved")
 }
 
-func (s *driverService) RejectDriver(id uuid.UUID) error {
+func (s *driverService) RejectDriver(id uuid.UUID, message string) error {
 	return s.repo.UpdateStatus(id, "Rejected")
 }
 
 func (s *driverService) UpdateDriver(driver *model.Driver) error {
 	return s.repo.Update(driver)
+}
+
+func (s *driverService) UpdateStatus(id uuid.UUID, status string) error {
+	return s.repo.UpdateStatus(id, status)
 }
 
 func (s *driverService) DeleteDriver(id uuid.UUID) error {

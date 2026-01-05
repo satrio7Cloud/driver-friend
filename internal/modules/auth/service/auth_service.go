@@ -3,6 +3,7 @@ package service
 import (
 	appErr "be/internal/errors"
 	"be/internal/modules/auth/dto"
+
 	authModel "be/internal/modules/auth/model"
 	roleModel "be/internal/modules/role/model"
 	roleRepository "be/internal/modules/role/repository"

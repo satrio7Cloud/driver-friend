@@ -1,0 +1,64 @@
+# =====================
+# Go build artifacts
+# =====================
+/bin/
+/build/
+/dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+
+# =====================
+# Go test & coverage
+# =====================
+*.test
+*.coverprofile
+coverage.out
+
+# =====================
+# Environment files
+# =====================
+.env
+.env.*
+!.env.example
+
+# =====================
+# Logs
+# =====================
+*.log
+logs/
+
+# =====================
+# Editor & OS
+# =====================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# =====================
+# Dependency cache
+# =====================
+vendor/
+
+# =====================
+# Temporary files
+# =====================
+tmp/
+temp/
+
+# =====================
+# Runtime generated files
+# =====================
+*.pid
+
+# =====================
+# OS binaries
+# =====================
+__pycache__/
+

@@ -4,7 +4,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"be/internal/modules/driver/model"
+	"be/internal/modules/vehicle/model"
 )
 
 type VehicleRepository interface {

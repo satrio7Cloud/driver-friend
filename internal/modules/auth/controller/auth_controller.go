@@ -103,6 +103,54 @@ func (ac *AuthController) VerifyPhone(ctx *gin.Context) {
 	})
 }
 
+// Login Admin
+func (ac *AuthController) LoginAdmin(ctx *gin.Context) {
+	var req dto.LoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Request",
+		})
+		return
+	}
+
+	res, err := ac.authService.Login(&req)
+	if err != nil {
+		if app, ok := err.(*appErr.AppError); ok {
+			ctx.JSON(app.Status, gin.H{
+				"error":   app.Code,
+				"message": app.Message,
+			})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": err.Error(),
+		})
+	}
+
+	isAdmin := false
+	for _, role := range res.Roles {
+		if role == "admin" || role == "super admin" {
+			isAdmin = true
+			break
+		}
+	}
+
+	if !isAdmin {
+		ctx.JSON(http.StatusOK, gin.H{
+			"error":   "FORBIDEN",
+			"message": "Admin access only",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Success",
+		"data":    res,
+	})
+
+}
+
 // Login by email
 func (ac *AuthController) Login(ctx *gin.Context) {
 	var req dto.LoginRequest

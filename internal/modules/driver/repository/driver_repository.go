@@ -43,22 +43,27 @@ func (r *driverRepository) FindByID(id uuid.UUID) (*model.Driver, error) {
 
 func (r *driverRepository) FindByUserID(userID uuid.UUID) (*model.Driver, error) {
 	var driver model.Driver
-	err := r.db.First(&driver, "user_id = ?", userID).Error
+	err := r.db.Where("user_id = ?", userID).First(&driver).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
-
 	return &driver, nil
 }
 
 func (r *driverRepository) FindByPhone(phone string) (*model.Driver, error) {
 	var driver model.Driver
-	err := r.db.First(&driver, "phone = ?", phone).Error
+	err := r.db.Where("phone = ?", phone).First(&driver).Error
 	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
-
 	return &driver, nil
+
 }
 
 func (r *driverRepository) Update(driver *model.Driver) error {

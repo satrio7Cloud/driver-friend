@@ -23,6 +23,7 @@ func (r *AuthRoutes) RegisterRoutes(router *gin.RouterGroup) {
 		// ========================
 		// PUBLIC
 		// ========================
+		auth.POST("/login-admin", r.authController.LoginAdmin)
 		auth.POST("/register", r.authController.Register)
 		auth.POST(
 			"/login",

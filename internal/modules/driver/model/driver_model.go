@@ -8,8 +8,8 @@ import (
 )
 
 type Driver struct {
-	ID     uuid.UUID `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID uuid.UUID `gorm:"type:uuid;not null;uniqueIndex" json:"user_id"`
+	ID     uuid.UUID  `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID *uuid.UUID `gorm:"type:uuid;uniqueIndex" json:"user_id,omitempty"`
 
 	// Personal Information
 	FullName         string     `gorm:"type:varchar(100);not null" json:"full_name"`
@@ -26,8 +26,8 @@ type Driver struct {
 	SIMPhoto    string `gorm:"type:text" json:"sim_photo"`
 	SKCKPhoto   string `gorm:"type:text" json:"skck_photo"`
 
-	// Status
-	Status string `gorm:"type:varchar(20);default:'pending'" json:"status"` // pending/approved/rejected
+	// Status string `gorm:"type:varchar(20);default:'pending'" json:"status"`
+	Status string `gorm:"type:varchar(20);default:'pending';check:status IN ('pending','approved','rejected')" json:"status"`
 
 	// Driver metadata
 	IsOnline bool `gorm:"default:false" json:"is_online"`

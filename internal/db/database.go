@@ -4,6 +4,7 @@ import (
 	authModel "be/internal/modules/auth/model"
 	driverModel "be/internal/modules/driver/model"
 	roleModel "be/internal/modules/role/model"
+	vehicleModel "be/internal/modules/vehicle/model"
 
 	"fmt"
 	"log"
@@ -32,9 +33,10 @@ func ConnectDatabase(host, port, user, password, dbname string) {
 
 	// Auto migrate models
 	err = db.AutoMigrate(
+
 		&authModel.User{},
 		&roleModel.Role{},
-		&driverModel.Vehicle{},
+		&vehicleModel.Vehicle{},
 		&driverModel.Driver{},
 	)
 
@@ -46,6 +48,10 @@ func ConnectDatabase(host, port, user, password, dbname string) {
 
 	if err := SeedRoles(db); err != nil {
 		log.Fatal("Failed to seed roles:", err)
+	}
+
+	if err := SeedAdmin(db); err != nil {
+		log.Fatal("Failed to seed admin:", err)
 	}
 
 	DB = db

@@ -47,6 +47,21 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
+func (r *userRepository) FindByIdentifier(identifier string) (*model.User, error) {
+	var user model.User
+
+	err := r.db.
+		Preload("Role").
+		Where("email = ? OR phone = ?", identifier, identifier).
+		First(&user).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (r *userRepository) Create(user *model.User) error {
 	return r.db.Create(user).Error
 }

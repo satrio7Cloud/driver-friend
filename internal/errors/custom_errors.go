@@ -43,3 +43,18 @@ func NewVerificationRequired(msg string) *AppError {
 		Status:  400,
 	}
 }
+
+func NewInternalServerError(msg string) *AppError {
+	return &AppError{
+		Code:    "INTERNAL_SERVER_ERROR",
+		Message: msg,
+		Status:  500,
+	}
+}
+
+func GetStatusCode(err error) int {
+	if appErr, ok := err.(*AppError); ok {
+		return appErr.Status
+	}
+	return 500
+}

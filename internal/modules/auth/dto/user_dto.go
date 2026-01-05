@@ -1,5 +1,10 @@
 package dto
 
+type LoginRequestAdmin struct {
+	Identifier string `json:"identifier" binding:"required"` // email / phone
+	Password   string `json:"password" binding:"required"`
+}
+
 type RegisterRequest struct {
 	Name     string `json:"name" validate:"required,min=2,max=100"`
 	Email    string `json:"email" validate:"required,email"`
