@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"be/internal/constants"
+	"fmt"
+)
 
 type AppError struct {
 	Code    string
@@ -14,7 +17,7 @@ func (e *AppError) Error() string {
 
 func NewNotFound(msg string) *AppError {
 	return &AppError{
-		Code:    "NOT_FOUND",
+		Code:    constants.ErrNotFound,
 		Message: msg,
 		Status:  404,
 	}
@@ -22,7 +25,7 @@ func NewNotFound(msg string) *AppError {
 
 func NewBadRequest(msg string) *AppError {
 	return &AppError{
-		Code:    "BAD_REQUEST",
+		Code:    constants.ErrBadRequest,
 		Message: msg,
 		Status:  400,
 	}
@@ -30,7 +33,7 @@ func NewBadRequest(msg string) *AppError {
 
 func NewAuthorized(msg string) *AppError {
 	return &AppError{
-		Code:    "UNAUTHORIZED",
+		Code:    constants.ErrUnauthorized,
 		Message: msg,
 		Status:  401,
 	}
@@ -38,7 +41,7 @@ func NewAuthorized(msg string) *AppError {
 
 func NewVerificationRequired(msg string) *AppError {
 	return &AppError{
-		Code:    "BAD_REQEUST",
+		Code:    constants.ErrVerificationRequired,
 		Message: msg,
 		Status:  400,
 	}
@@ -46,9 +49,17 @@ func NewVerificationRequired(msg string) *AppError {
 
 func NewInternalServerError(msg string) *AppError {
 	return &AppError{
-		Code:    "INTERNAL_SERVER_ERROR",
+		Code:    constants.ErrInternalServerError,
 		Message: msg,
 		Status:  500,
+	}
+}
+
+func NewForbiden(msg string) *AppError {
+	return &AppError{
+		Code:    constants.ErrForbiden,
+		Message: msg,
+		Status:  403,
 	}
 }
 

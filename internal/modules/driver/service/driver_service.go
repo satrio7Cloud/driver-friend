@@ -12,8 +12,11 @@ type DriverService interface {
 	RegisterDriver(req *model.Driver) (*model.Driver, error)
 	GetDriverByID(id uuid.UUID) (*model.Driver, error)
 	GetDriverByUserID(useID uuid.UUID) (*model.Driver, error)
+
+	GetPendingDrivers() ([]model.Driver, error)
 	ApproveDriver(id uuid.UUID) error
 	RejectDriver(id uuid.UUID, message string) error
+
 	UpdateDriver(driver *model.Driver) error
 	DeleteDriver(id uuid.UUID) error
 	UpdateStatus(id uuid.UUID, status string) error
@@ -66,12 +69,51 @@ func (s *driverService) GetDriverByUserID(userID uuid.UUID) (*model.Driver, erro
 	return driver, nil
 }
 
+func (s *driverService) GetPendingDrivers() ([]model.Driver, error) {
+	drivers, err := s.repo.FindPending()
+	if err != nil {
+		return nil, appErr.NewInternalServerError("Failed to fetch pending drivers")
+	}
+
+	if len(drivers) == 0 {
+		return []model.Driver{}, nil
+	}
+
+	return drivers, nil
+}
+
 func (s *driverService) ApproveDriver(id uuid.UUID) error {
-	return s.repo.UpdateStatus(id, "Approved")
+	driver, err := s.repo.FindByID(id)
+
+	if err != nil {
+		return appErr.NewNotFound("Driver not found")
+	}
+
+	if driver.Status != "pending" {
+		return appErr.NewBadRequest("Driver already processed")
+	}
+
+	driver.Status = "approved"
+	driver.IsOnline = false
+
+	return s.repo.Update(driver)
 }
 
 func (s *driverService) RejectDriver(id uuid.UUID, message string) error {
-	return s.repo.UpdateStatus(id, "Rejected")
+	driver, err := s.repo.FindByID(id)
+
+	if err != nil {
+		return appErr.NewNotFound("Driver not found")
+	}
+
+	if driver.Status != "pedning" {
+		return appErr.NewBadRequest("Driver already processed")
+	}
+
+	driver.Status = "rejected"
+	driver.IsOnline = false
+
+	return s.repo.Update(driver)
 }
 
 func (s *driverService) UpdateDriver(driver *model.Driver) error {

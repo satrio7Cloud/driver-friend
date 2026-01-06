@@ -12,6 +12,7 @@ type DriverRepository interface {
 	FindByID(id uuid.UUID) (*model.Driver, error)
 	FindByUserID(userID uuid.UUID) (*model.Driver, error)
 	FindByPhone(phone string) (*model.Driver, error)
+	FindPending() ([]model.Driver, error)
 	Update(driver *model.Driver) error
 	UpdateStatus(id uuid.UUID, status string) error
 	Delete(id uuid.UUID) error
@@ -63,7 +64,21 @@ func (r *driverRepository) FindByPhone(phone string) (*model.Driver, error) {
 		return nil, err
 	}
 	return &driver, nil
+}
 
+func (r *driverRepository) FindPending() ([]model.Driver, error) {
+	var drivers []model.Driver
+
+	err := r.db.
+		Where("status = ?", "pending").
+		Order("created_at ASC").
+		Find(&drivers).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return drivers, nil
 }
 
 func (r *driverRepository) Update(driver *model.Driver) error {

@@ -3,15 +3,15 @@ package service
 import (
 	appErr "be/internal/errors"
 
-	// "be/internal/modules/vehicle/dto"
+	driverRepo "be/internal/modules/driver/repository"
 	"be/internal/modules/vehicle/model"
-	"be/internal/modules/vehicle/repository"
+	vehicleRepo "be/internal/modules/vehicle/repository"
 
 	"github.com/google/uuid"
 )
 
 type VehicleService interface {
-	RegisterVehicle(vehicle *model.Vehicle) (*model.Vehicle, error)
+	CreateVehicle(driverID uuid.UUID, vehicle *model.Vehicle) (*model.Vehicle, error)
 	ApproveVehicle(vehicleID uuid.UUID) error
 	GetDriverVehicle(driverID uuid.UUID) ([]model.Vehicle, error)
 
@@ -19,21 +19,40 @@ type VehicleService interface {
 }
 
 type vehicleService struct {
-	vehicleRepo repository.VehicleRepository
+	vehicleRepo vehicleRepo.VehicleRepository
+	driverRepo  driverRepo.DriverRepository
 }
 
-func NewVehicleService(vehileRepo repository.VehicleRepository) VehicleService {
+func NewVehicleService(
+	vehileRepo vehicleRepo.VehicleRepository,
+	driverRepo driverRepo.DriverRepository,
+) VehicleService {
 	return &vehicleService{
 		vehicleRepo: vehileRepo,
+		driverRepo:  driverRepo,
 	}
 }
 
-func (s *vehicleService) RegisterVehicle(vehicle *model.Vehicle) (*model.Vehicle, error) {
+func (s *vehicleService) CreateVehicle(
+	driverID uuid.UUID,
+	vehicle *model.Vehicle,
+) (*model.Vehicle, error) {
+	driver, err := s.driverRepo.FindByID(driverID)
+	if err != nil {
+		return nil, appErr.NewNotFound("Driver Not Found")
+	}
+
+	if driver.Status != "approved" {
+		return nil, appErr.NewForbiden("Driver not approved")
+	}
+
+	vehicle.DriverID = driverID
 	vehicle.Status = "pending"
 
 	if err := s.vehicleRepo.Create(vehicle); err != nil {
-		return nil, appErr.NewAuthorized("failed to register vehicle")
+		return nil, appErr.NewInternalServerError("Failed to register vehicle")
 	}
+
 	return vehicle, nil
 }
 

@@ -8,11 +8,15 @@ import (
 
 var JWTSecret = []byte("SUPERSECRETKEY")
 
-func GenerateToken(userID string, roles []string) (string, error) {
+func GenerateToken(
+	userID string,
+	// driverID string,
+	roles []string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-		"roles":   roles,
+		// "driver_id": driverID,
+		"exp":   time.Now().Add(24 * time.Hour).Unix(),
+		"roles": roles,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

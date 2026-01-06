@@ -59,7 +59,7 @@ func (a *App) RegisterRoutes() {
 
 	// ================= VEHICLE =================
 	vehicleRepo := vehicleRepository.NewVehicleRepository(db.DB)
-	vehicleSvc := vehicleServicePkg.NewVehicleService(vehicleRepo)
+	vehicleSvc := vehicleServicePkg.NewVehicleService(vehicleRepo, driverRepo)
 	vehicleCtrl := vehicleControllerPkg.NewVehicleController(vehicleSvc)
 
 	// ================= ROUTER =================

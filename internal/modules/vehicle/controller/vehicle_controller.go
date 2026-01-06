@@ -43,7 +43,7 @@ func (vc *VehicleController) RegisterVehicle(ctx *gin.Context) {
 
 	req.DriverID = driverID
 
-	vehicle, err := vc.vehicleService.RegisterVehicle(&req)
+	vehicle, err := vc.vehicleService.CreateVehicle(driverID, &req)
 	if err != nil {
 		appErr.NewInternalServerError(err.Error())
 		return

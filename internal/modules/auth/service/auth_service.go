@@ -44,7 +44,7 @@ func NewAuthService(
 	}
 }
 
-// REGISTER
+// REGISTER (Customer)
 func (s *authService) Register(req *dto.RegisterRequest) (*dto.RegisterResponse, error) {
 
 	email := strings.ToLower(strings.TrimSpace(req.Email))
@@ -145,7 +145,7 @@ func extractRoleNames(roles []roleModel.Role) []string {
 	return result
 }
 
-// LOGIN by email
+// LOGIN by email (Customer)
 func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 
 	identifier := strings.TrimSpace(req.Email)
@@ -211,7 +211,7 @@ func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 
 }
 
-// Login by phone
+// Login by phone (Customer)
 func (s *authService) LoginByPhone(req *dto.LoginPhoneRequest) (*dto.AuthResponse, error) {
 	identifier := strings.TrimSpace(req.Phone)
 	var user *authModel.User

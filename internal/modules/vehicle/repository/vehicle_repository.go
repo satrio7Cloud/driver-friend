@@ -41,7 +41,7 @@ func (r *vehicleRepository) FindByDriverID(driverID uuid.UUID) ([]model.Vehicle,
 	var vehicle []model.Vehicle
 	err := r.db.Where("driver_id = ?", driverID).Find(&vehicle).Error
 	if err != nil {
-		return vehicle, nil
+		return vehicle, err
 	}
 	return vehicle, nil
 }

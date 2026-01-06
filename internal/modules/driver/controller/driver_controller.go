@@ -79,52 +79,6 @@ func (dc *DriverController) GetDriverProfile(ctx *gin.Context) {
 	})
 }
 
-// func (dc *DriverController) ApprovedDriver(ctx *gin.Context) {
-// 	id := ctx.Param("driver_id")
-// 	driverID, err := uuid.Parse(id)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"error": "Invalid driver ID",
-// 		})
-// 		return
-// 	}
-
-// 	err = dc.driverService.ApproveDriver(driverID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, gin.H{
-// 		"message": "Success",
-// 	})
-// }
-
-// func (dc *DriverController) RejectDriver(ctx *gin.Context) {
-// 	id := ctx.Param("driver_id")
-// 	driverID, err := uuid.Parse(id)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusBadRequest, gin.H{
-// 			"error": "Invalid driver ID",
-// 		})
-// 		return
-// 	}
-
-// 	err = dc.driverService.RejectDriver(driverID)
-// 	if err != nil {
-// 		ctx.JSON(http.StatusInternalServerError, gin.H{
-// 			"error": err.Error(),
-// 		})
-// 		return
-// 	}
-
-// 	ctx.JSON(http.StatusOK, gin.H{
-// 		"message": "Success",
-// 	})
-// }
-
 func (dc *DriverController) DeleteDriver(ctx *gin.Context) {
 	id := ctx.Param("driver_id")
 	driverID, err := uuid.Parse(id)

@@ -8,23 +8,36 @@ import (
 
 func OnlyAdmin() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		role, exists := ctx.Get("role")
+		rolesValue, exists := ctx.Get("roles")
 		if !exists {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized: role not found",
+				"error": "Unauthorized: roles not found",
 			})
-			ctx.Abort()
 			return
 		}
 
-		if role != "admin" && role != "super admin" {
+		roles, ok := rolesValue.([]interface{})
+		if !ok {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Forbiden: only admin can access this routes",
+				"error": "invalid roles format",
 			})
-			ctx.Abort()
+			return
+		}
+
+		isAdmin := false
+		for _, r := range roles {
+			if r == "admin" || r == "super admin" {
+				isAdmin = true
+				break
+			}
+		}
+
+		if !isAdmin {
+			ctx.JSON(http.StatusForbidden, gin.H{
+				"error": "Forbiden: only admin can access",
+			})
 			return
 		}
 		ctx.Next()
-
 	}
 }

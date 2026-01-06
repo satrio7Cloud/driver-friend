@@ -41,6 +41,22 @@ func (c *AdminDriverController) ApproveDriver(ctx *gin.Context) {
 	})
 }
 
+func (c *AdminDriverController) GetPendingDrivers(ctx *gin.Context) {
+	drivers, err := c.driverService.GetPendingDrivers()
+
+	if err != nil {
+		ctx.JSON(appErr.GetStatusCode(err), gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Success",
+		"data":    drivers,
+	})
+}
+
 func (c *AdminDriverController) RejectDriver(ctx *gin.Context) {
 	driverIDParam := ctx.Param("id")
 

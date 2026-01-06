@@ -15,7 +15,6 @@ type UserRepository interface {
 	Update(user *model.User) error
 
 	AsignRole(userID, roleID uuid.UUID) error
-	// AsignRole(user *model.User, role *model.Role)
 
 	FindByEmail(email string) (*model.User, error)
 	FindByEmailWithRoles(email string) (*model.User, error)

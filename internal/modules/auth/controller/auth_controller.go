@@ -20,7 +20,7 @@ func NewAuthController(authService service.AuthService) *AuthController {
 	}
 }
 
-// Register
+// Register (Customer)
 func (ac *AuthController) Register(ctx *gin.Context) {
 	var req dto.RegisterRequest
 
@@ -43,7 +43,7 @@ func (ac *AuthController) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Success", "data": res})
 }
 
-// Verify Email
+// Verify Email (Customer)
 func (ac *AuthController) VerifyEmail(ctx *gin.Context) {
 	var req struct {
 		UserID string `json:"user_id"`
@@ -69,7 +69,7 @@ func (ac *AuthController) VerifyEmail(ctx *gin.Context) {
 	})
 }
 
-// Verify Phone
+// Verify Phone (Customer)
 func (ac *AuthController) VerifyPhone(ctx *gin.Context) {
 	var req struct {
 		UserID string `json:"user_id"`
@@ -103,7 +103,7 @@ func (ac *AuthController) VerifyPhone(ctx *gin.Context) {
 	})
 }
 
-// Login Admin
+// Login (Admin)
 func (ac *AuthController) LoginAdmin(ctx *gin.Context) {
 	var req dto.LoginRequest
 
@@ -151,7 +151,7 @@ func (ac *AuthController) LoginAdmin(ctx *gin.Context) {
 
 }
 
-// Login by email
+// Login by email (Customer)
 func (ac *AuthController) Login(ctx *gin.Context) {
 	var req dto.LoginRequest
 
@@ -178,7 +178,7 @@ func (ac *AuthController) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Login successfull", "data": res})
 }
 
-// Login by Phone
+// Login by Phone (Customer)
 func (ac *AuthController) LoginPhone(ctx *gin.Context) {
 	var req dto.LoginPhoneRequest
 
@@ -208,7 +208,7 @@ func (ac *AuthController) LoginPhone(ctx *gin.Context) {
 
 }
 
-// Profile
+// Profile (Customer)
 func (ac *AuthController) Profile(ctx *gin.Context) {
 	userID, exists := ctx.Get("user_id")
 
@@ -235,7 +235,7 @@ func (ac *AuthController) Profile(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"data": user})
 }
 
-// Top Up
+// Top Up (Customer)
 func (ac *AuthController) TopUp(ctx *gin.Context) {
 	userID, exists := ctx.Get("user_id")
 	if !exists {

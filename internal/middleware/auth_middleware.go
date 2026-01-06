@@ -35,7 +35,12 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		c.Set("user_id", claims["user_id"])
-		c.Set("role", claims["role"])
+		c.Set("roles", claims["roles"])
+
+		if driverID, ok := claims["driver_id"]; ok {
+			c.Set("roles", driverID)
+		}
+
 		c.Next()
 	}
 
