@@ -5,6 +5,10 @@ type LoginRequestAdmin struct {
 	Password   string `json:"password" binding:"required"`
 }
 
+type DriverLoginRequest struct {
+	Phone string `json:"phone" binding:"required"`
+}
+
 type RegisterRequest struct {
 	Name     string `json:"name" validate:"required,min=2,max=100"`
 	Email    string `json:"email" validate:"required,email"`
@@ -12,8 +16,9 @@ type RegisterRequest struct {
 	Phone    string `json:"phone" validate:"required"`
 }
 
-type VerifyRequest struct {
-	UserID string `json:"user_id" binding:"required"`
+type VerifyOTPRequest struct {
+	Phone string `json:"phone" binding:"required"`
+	OTP   string `json:"otp" binding:"required"`
 }
 
 type LoginRequest struct {
@@ -49,6 +54,14 @@ type AuthResponse struct {
 	Token   string   `json:"token"`
 	Balance int64    `json:"balance"`
 	Roles   []string `json:"role"`
+}
+
+type DriverAuthResponse struct {
+	ID    string   `json:"id"`
+	Name  string   `json:"name"`
+	Phone string   `json:"phone"`
+	Token string   `json:"token"`
+	Roles []string `json:"role"`
 }
 
 type ProfileResponse struct {

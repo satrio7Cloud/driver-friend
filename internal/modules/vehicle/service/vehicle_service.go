@@ -43,7 +43,12 @@ func (s *vehicleService) CreateVehicle(
 	}
 
 	if driver.Status != "approved" {
-		return nil, appErr.NewForbiden("Driver not approved")
+		return nil, appErr.NewForbidden("Driver not approved")
+	}
+
+	existint, err := s.vehicleRepo.FindByDriverID(driverID)
+	if len(existint) > 0 {
+		return nil, appErr.NewBadRequest("Pengemudi sudah memiliki kendaraan.")
 	}
 
 	vehicle.DriverID = driverID
@@ -57,7 +62,17 @@ func (s *vehicleService) CreateVehicle(
 }
 
 func (s *vehicleService) ApproveVehicle(vehicleID uuid.UUID) error {
-	return s.vehicleRepo.ApproveVehicle(vehicleID)
+	vehicle, err := s.vehicleRepo.FindByID(vehicleID)
+	if err != nil {
+		return appErr.NewNotFound("Vehicle not found")
+	}
+
+	if err := s.vehicleRepo.ApproveVehicle(vehicleID); err != nil {
+		return err
+	}
+
+	_ = s.driverRepo.SetOnline(vehicle.DriverID, true)
+	return nil
 }
 
 func (s *vehicleService) GetDriverVehicle(driverID uuid.UUID) ([]model.Vehicle, error) {
@@ -67,12 +82,19 @@ func (s *vehicleService) GetDriverVehicle(driverID uuid.UUID) ([]model.Vehicle, 
 func (s *vehicleService) DeleteVehicle(vehicleID uuid.UUID, driverID uuid.UUID) error {
 	vehicle, err := s.vehicleRepo.FindByID(vehicleID)
 	if err != nil {
-		return nil
+		return appErr.NewNotFound("Vehicle not found")
 	}
 
 	if vehicle.DriverID != driverID {
-		return appErr.NewBadRequest("not authorized to delete this vehicle")
+		return appErr.NewForbidden("Not Authorized")
 	}
 
-	return s.vehicleRepo.Delete(vehicleID)
+	if err := s.vehicleRepo.Delete(vehicleID); err != nil {
+		return err
+	}
+
+	_ = s.driverRepo.SetOnline(driverID, false)
+
+	return nil
+
 }

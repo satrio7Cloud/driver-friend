@@ -26,13 +26,14 @@ func (vc *VehicleController) RegisterVehicle(ctx *gin.Context) {
 	driverIDStr, existing := ctx.Get("driver_id")
 
 	if !existing {
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Unauthorized",
 		})
 		return
 	}
 
 	driverID, _ := uuid.Parse(driverIDStr.(string))
+
 	var req model.Vehicle
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -41,18 +42,19 @@ func (vc *VehicleController) RegisterVehicle(ctx *gin.Context) {
 		return
 	}
 
-	req.DriverID = driverID
-
 	vehicle, err := vc.vehicleService.CreateVehicle(driverID, &req)
 	if err != nil {
-		appErr.NewInternalServerError(err.Error())
+		appErr.HandleError(ctx, err)
 		return
 	}
+
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message": "Success",
 		"data":    vehicle,
 	})
 }
+
+// melakukan optimasi query pada sistem agar performa tetap stabil.
 
 func (vc *VehicleController) GetMyVehicle(ctx *gin.Context) {
 	driverIDStr, exists := ctx.Get("driver_id")
@@ -67,7 +69,7 @@ func (vc *VehicleController) GetMyVehicle(ctx *gin.Context) {
 
 	vehicle, err := vc.vehicleService.GetDriverVehicle(driverID)
 	if err != nil {
-		appErr.NewInternalServerError(err.Error())
+		appErr.NewNotFound("Vehicle not found")
 		return
 	}
 
@@ -124,7 +126,7 @@ func (vc *VehicleController) DeleteVehicle(ctx *gin.Context) {
 
 	driverID, _ := uuid.Parse(driverIDStr.(string))
 	if err := vc.vehicleService.DeleteVehicle(vehicleID, driverID); err != nil {
-		appErr.NewInternalServerError(err.Error())
+		appErr.HandleError(ctx, err)
 		return
 	}
 
@@ -143,7 +145,7 @@ func (vc *VehicleController) ApproveVehicle(ctx *gin.Context) {
 	}
 
 	if err := vc.vehicleService.ApproveVehicle(vehicleID); err != nil {
-		appErr.NewInternalServerError(err.Error())
+		appErr.HandleError(ctx, err)
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{

@@ -14,6 +14,7 @@ import (
 	driverRepository "be/internal/modules/driver/repository"
 	driverRoutesPkg "be/internal/modules/driver/routes"
 	driverServicePkg "be/internal/modules/driver/service"
+	otpRepository "be/internal/modules/otp/repository"
 
 	vehicleControllerPkg "be/internal/modules/vehicle/controller"
 	vehicleRepository "be/internal/modules/vehicle/repository"
@@ -47,11 +48,13 @@ func (a *App) RegisterRoutes() {
 	// ================= AUTH =================
 	userRepo := authRepository.NewUserRepository(db.DB)
 	roleRepo := roleRepository.NewRoleRepository(db.DB)
-	authSvc := authServicePkg.NewAuthService(userRepo, roleRepo, "SUPERSECRETKEY")
+	otpRepo := otpRepository.NewOTPRepository()
+	driverRepo := driverRepository.NewDriverRepository(db.DB)
+	authSvc := authServicePkg.NewAuthService(userRepo, roleRepo, driverRepo, otpRepo, "SUPERSECRETKEY")
 	authCtrl := authControllerPkg.NewAuthController(authSvc)
 
 	// ================= DRIVER =================
-	driverRepo := driverRepository.NewDriverRepository(db.DB)
+	// driverRepo := driverRepository.NewDriverRepository(db.DB)
 	driverSvc := driverServicePkg.NewDriverService(driverRepo)
 
 	driverCtrl := driverControllerPkg.NewDriverController(driverSvc)

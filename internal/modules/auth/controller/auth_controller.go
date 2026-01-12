@@ -208,6 +208,94 @@ func (ac *AuthController) LoginPhone(ctx *gin.Context) {
 
 }
 
+// Login By Phone(Driver)
+func (ac *AuthController) LoginDriver(ctx *gin.Context) {
+	var req dto.DriverLoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request body",
+		})
+		return
+	}
+
+	if err := ac.authService.LoginDriver(&req); err != nil {
+		if app, ok := err.(*appErr.AppError); ok {
+			ctx.JSON(app.Status, gin.H{
+				"error": app.Message,
+			})
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Success",
+	})
+}
+
+// Request Driver OTP
+func (ac *AuthController) RequestDriverOTP(ctx *gin.Context) {
+	var req dto.DriverLoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid Request",
+		})
+		return
+	}
+
+	err := ac.authService.RequestDriverOTP(&req)
+	if err != nil {
+		if app, ok := err.(*appErr.AppError); ok {
+			ctx.JSON(app.Status, gin.H{
+				"error": app.Message,
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal Server Error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "OTP send Successfully",
+	})
+}
+
+// Verify driver otp
+func (ac *AuthController) VerifyDriverOTP(ctx *gin.Context) {
+	var req dto.VerifyOTPRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid request",
+		})
+		return
+	}
+
+	res, err := ac.authService.VerifyDriverOTP(&req)
+	if err != nil {
+		if app, ok := err.(*appErr.AppError); ok {
+			ctx.JSON(app.Status, gin.H{
+				"error": app.Message,
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Internal server error",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Success",
+		"data":    res,
+	})
+}
+
 // Profile (Customer)
 func (ac *AuthController) Profile(ctx *gin.Context) {
 	userID, exists := ctx.Get("user_id")

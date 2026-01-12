@@ -3,6 +3,9 @@ package errors
 import (
 	"be/internal/constants"
 	"fmt"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type AppError struct {
@@ -55,12 +58,24 @@ func NewInternalServerError(msg string) *AppError {
 	}
 }
 
-func NewForbiden(msg string) *AppError {
+func NewForbidden(msg string) *AppError {
 	return &AppError{
 		Code:    constants.ErrForbiden,
 		Message: msg,
 		Status:  403,
 	}
+}
+
+func HandleError(ctx *gin.Context, err error) {
+	if appErr, ok := err.(*AppError); ok {
+		ctx.JSON(appErr.Status, gin.H{
+			"error": appErr.Message,
+		})
+		return
+	}
+	ctx.JSON(http.StatusInternalServerError, gin.H{
+		"error": "Internal server error",
+	})
 }
 
 func GetStatusCode(err error) int {

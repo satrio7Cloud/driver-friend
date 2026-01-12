@@ -1,55 +1,51 @@
 package middleware
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
 func OnlyDriver() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		rolesAny, exists := ctx.Get("roles")
+		rolesVal, exists := ctx.Get("roles")
 		if !exists {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized: role not found",
+			ctx.AbortWithStatusJSON(403, gin.H{
+				"error": "roles not found",
 			})
-			ctx.Abort()
 			return
 		}
 
-		roles, ok := rolesAny.([]string)
+		rolesInterface, ok := rolesVal.([]interface{})
 		if !ok {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
+			ctx.AbortWithStatusJSON(403, gin.H{
 				"error": "Invalid roles format",
 			})
-			ctx.Abort()
 			return
 		}
 
 		isDriver := false
-		for _, r := range roles {
-			if r == "driver" {
+		for _, r := range rolesInterface {
+			if roleStr, ok := r.(string); ok && roleStr == "driver" {
 				isDriver = true
 				break
 			}
 		}
 
 		if !isDriver {
-			ctx.JSON(http.StatusForbidden, gin.H{
-				"error": "Forbiden: driver access only",
+			ctx.AbortWithStatusJSON(403, gin.H{
+				"error": "Driver access only",
 			})
 			return
 		}
 
 		driverID, exists := ctx.Get("driver_id")
-		if !exists || driverID == "" {
-			ctx.JSON(http.StatusForbidden, gin.H{
-				"error": "driver_id is missing in token",
+		if !exists {
+			ctx.AbortWithStatusJSON(403, gin.H{
+				"error": "driver_id not found",
 			})
-			ctx.Abort()
 			return
 		}
 
+		ctx.Set("driver_id", driverID)
 		ctx.Next()
 
 	}

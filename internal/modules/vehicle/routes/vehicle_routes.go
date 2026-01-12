@@ -18,18 +18,22 @@ func NewVehicleRoutes(vehicleController *controller.VehicleController) *VehicleR
 }
 
 func (v *VehicleRoutes) RegisterRoutes(router *gin.RouterGroup) {
-	vehicle := router.Group("/driver")
+	driver := router.Group("/driver")
 	{
-		vehicle.Use(middleware.OnlyDriver())
+		driver.Use(
+			middleware.AuthMiddleware(),
+			middleware.OnlyDriver())
 		{
-			vehicle.POST("/vehicles", v.vehicleController.RegisterVehicle)
-			// vehicle.PUT("/:vehicle_id/approve", v.vehicleController.ApproveVehicle)
-			vehicle.GET("/vehicles", v.vehicleController.GetDriverVehicle)
-			vehicle.DELETE("/vehicles/:vehicle_id", v.vehicleController.DeleteVehicle)
+			driver.POST("/vehicles", v.vehicleController.RegisterVehicle)
+			driver.GET("/vehicles", v.vehicleController.GetDriverVehicle)
+			driver.DELETE("/vehicles/:vehicle_id", v.vehicleController.DeleteVehicle)
 		}
 
 		admin := router.Group("/admin")
-		admin.Use(middleware.AuthMiddleware(), middleware.OnlyAdmin())
+		admin.Use(
+			middleware.AuthMiddleware(),
+			middleware.OnlyAdmin(),
+		)
 		{
 			admin.PUT("/vehicles/:id/approve", v.vehicleController.ApproveVehicle)
 		}

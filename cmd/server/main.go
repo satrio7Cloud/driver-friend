@@ -11,6 +11,7 @@ func main() {
 	cfg := config.LoadConfig()
 
 	db.ConnectDatabase(cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	db.InitRedis()
 	server := app.NewApp(cfg.ServerPort)
 
 	log.Println("Server is running on port", cfg.ServerPort)

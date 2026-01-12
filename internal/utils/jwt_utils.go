@@ -4,19 +4,26 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 var JWTSecret = []byte("SUPERSECRETKEY")
 
 func GenerateToken(
 	userID string,
-	// driverID string,
-	roles []string) (string, error) {
+	roles []string,
+	driverID *uuid.UUID,
+	isDriver bool,
+) (string, error) {
 	claims := jwt.MapClaims{
-		"user_id": userID,
-		// "driver_id": driverID,
-		"exp":   time.Now().Add(24 * time.Hour).Unix(),
-		"roles": roles,
+		"user_id":   userID,
+		"exp":       time.Now().Add(24 * time.Hour).Unix(),
+		"roles":     roles,
+		"is_driver": isDriver,
+	}
+
+	if driverID != nil {
+		claims["driver_id"] = driverID.String()
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

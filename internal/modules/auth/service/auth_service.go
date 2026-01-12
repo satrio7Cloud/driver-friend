@@ -5,6 +5,8 @@ import (
 	"be/internal/modules/auth/dto"
 
 	authModel "be/internal/modules/auth/model"
+	driverRepository "be/internal/modules/driver/repository"
+	otpRepo "be/internal/modules/otp/repository"
 	roleModel "be/internal/modules/role/model"
 	roleRepository "be/internal/modules/role/repository"
 
@@ -13,10 +15,15 @@ import (
 
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type AuthService interface {
 	Register(input *dto.RegisterRequest) (*dto.RegisterResponse, error)
+	RequestDriverOTP(req *dto.DriverLoginRequest) error
+	VerifyDriverOTP(req *dto.VerifyOTPRequest) (*dto.DriverAuthResponse, error)
+	LoginDriver(req *dto.DriverLoginRequest) error
 	Login(input *dto.LoginRequest) (*dto.AuthResponse, error)
 	LoginByPhone(input *dto.LoginPhoneRequest) (*dto.AuthResponse, error)
 	GetProfile(userID string) (*dto.ProfileResponse, error)
@@ -28,19 +35,25 @@ type AuthService interface {
 }
 
 type authService struct {
-	userRepo  repository.UserRepository
-	roleRepo  roleRepository.RoleRepository
-	jwtSecret []byte
+	userRepo   repository.UserRepository
+	roleRepo   roleRepository.RoleRepository
+	driverRepo driverRepository.DriverRepository
+	otpRepo    otpRepo.OTPRepository
+	jwtSecret  []byte
 }
 
 func NewAuthService(
 	userRepo repository.UserRepository,
 	roleRepo roleRepository.RoleRepository,
+	driverRepo driverRepository.DriverRepository,
+	otpRepo otpRepo.OTPRepository,
 	jwtSecret string) AuthService {
 	return &authService{
-		userRepo:  userRepo,
-		roleRepo:  roleRepo,
-		jwtSecret: []byte(jwtSecret),
+		userRepo:   userRepo,
+		roleRepo:   roleRepo,
+		driverRepo: driverRepo,
+		otpRepo:    otpRepo,
+		jwtSecret:  []byte(jwtSecret),
 	}
 }
 
@@ -194,7 +207,12 @@ func (s *authService) Login(req *dto.LoginRequest) (*dto.AuthResponse, error) {
 		return nil, appErr.NewBadRequest("user has no role assigned")
 	}
 
-	token, err := utils.GenerateToken(user.ID.String(), roleNames)
+	token, err := utils.GenerateToken(
+		user.ID.String(),
+		roleNames,
+		nil,
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -228,7 +246,7 @@ func (s *authService) LoginByPhone(req *dto.LoginPhoneRequest) (*dto.AuthRespons
 	}
 
 	if user.IsBlocked {
-		return nil, appErr.NewAuthorized("Akun ada di blokir")
+		return nil, appErr.NewAuthorized("Akun anda di blokir")
 	}
 
 	if !user.IsPhoneVerified {
@@ -257,7 +275,12 @@ func (s *authService) LoginByPhone(req *dto.LoginPhoneRequest) (*dto.AuthRespons
 		return nil, appErr.NewBadRequest("user has no role assigned")
 	}
 
-	token, err := utils.GenerateToken(user.ID.String(), roleNames)
+	token, err := utils.GenerateToken(
+		user.ID.String(),
+		roleNames,
+		nil,
+		false,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +296,7 @@ func (s *authService) LoginByPhone(req *dto.LoginPhoneRequest) (*dto.AuthRespons
 	}, nil
 }
 
-// GetProfile
+// GetProfile (Customer)
 func (s *authService) GetProfile(userID string) (*dto.ProfileResponse, error) {
 	user, err := s.userRepo.FindProfileById(userID)
 
@@ -299,6 +322,117 @@ func (s *authService) GetProfile(userID string) (*dto.ProfileResponse, error) {
 		CreatedAt:       user.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:       user.UpdatedAt.Format(time.RFC3339),
 	}, nil
+}
+
+func (s *authService) RequestDriverOTP(req *dto.DriverLoginRequest) error {
+	user, _ := s.userRepo.FindPhoneWithRoles(req.Phone)
+
+	if user == nil {
+		return appErr.NewBadRequest("Account Not Found")
+	}
+
+	driver, _ := s.driverRepo.FindByUserID(user.ID)
+	if driver == nil {
+		return appErr.NewForbidden("Anda belum terdaftar sebagai driver")
+	}
+
+	if driver.Status != "approved" {
+		return appErr.NewForbidden("Driver belum di setujui")
+	}
+
+	otp := utils.GenerateOTP()
+
+	if err := s.otpRepo.Save(user.ID, otp); err != nil {
+		return err
+	}
+
+	utils.SendOTP(req.Phone, otp)
+	return nil
+
+}
+
+// Login by phone (Driver)
+func (s *authService) LoginDriver(req *dto.DriverLoginRequest) error {
+	driver, err := s.driverRepo.FindByPhone(req.Phone)
+	if err != nil {
+		return appErr.NewBadRequest("Nomor belum terdaftar sebagai driver")
+	}
+
+	if driver.Status != "approved" {
+		return appErr.NewForbidden("Driver belum di setujui")
+	}
+
+	user, err := s.userRepo.FindByPhone(req.Phone)
+
+	if user == nil {
+		user = &authModel.User{
+			ID:    uuid.New(),
+			Name:  driver.FullName,
+			Phone: driver.Phone,
+		}
+
+		if err := s.userRepo.Create(user); err != nil {
+			return err
+		}
+
+		role, err := s.roleRepo.FindByName("driver")
+		if err != nil {
+			return err
+		}
+
+		if err := s.userRepo.AsignRole(user.ID, role.ID); err != nil {
+			return err
+		}
+
+		if err := s.driverRepo.AttachUser(driver.ID, user.ID); err != nil {
+			return err
+		}
+	}
+
+	otp := utils.GenerateOTP()
+	_ = s.otpRepo.Save(user.ID, otp)
+	utils.SendOTP(req.Phone, otp)
+
+	return nil
+}
+
+// Verify Driver OTP
+func (s *authService) VerifyDriverOTP(req *dto.VerifyOTPRequest) (*dto.DriverAuthResponse, error) {
+	user, _ := s.userRepo.FindPhoneWithRoles(req.Phone)
+	if user == nil {
+		return nil, appErr.NewBadRequest("Account not found")
+	}
+
+	valid, err := s.otpRepo.Verify(user.ID, req.OTP)
+	if err != nil || !valid {
+		return nil, appErr.NewBadRequest("OTP invalid or expired")
+	}
+
+	_ = s.otpRepo.Delete(user.ID)
+
+	driver, _ := s.driverRepo.FindByUserID(user.ID)
+
+	roles := extractRoleNames(user.Role)
+
+	token, err := utils.GenerateToken(
+		user.ID.String(),
+		roles,
+		&driver.ID,
+		true,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.DriverAuthResponse{
+		ID:    user.ID.String(),
+		Name:  user.Name,
+		Phone: user.Phone,
+		Token: token,
+		Roles: roles,
+	}, nil
+
 }
 
 // TopUp

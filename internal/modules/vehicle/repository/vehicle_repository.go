@@ -11,6 +11,7 @@ type VehicleRepository interface {
 	Create(vehicle *model.Vehicle) error
 	FindByID(id uuid.UUID) (*model.Vehicle, error)
 	FindByDriverID(driverID uuid.UUID) ([]model.Vehicle, error)
+	FindActiveApprovedByDriverID(driverID uuid.UUID) (*model.Vehicle, error)
 	Update(vehicle *model.Vehicle) error
 	Delete(id uuid.UUID) error
 	ApproveVehicle(id uuid.UUID) error
@@ -44,6 +45,22 @@ func (r *vehicleRepository) FindByDriverID(driverID uuid.UUID) ([]model.Vehicle,
 		return vehicle, err
 	}
 	return vehicle, nil
+}
+
+func (r *vehicleRepository) FindActiveApprovedByDriverID(driverID uuid.UUID) (*model.Vehicle, error) {
+	var vehicle model.Vehicle
+
+	err := r.db.
+		Where("driver_id = ?", driverID).
+		Where("status ? = ", "approved").
+		Where("is_active = ?", true).
+		First(&vehicle).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &vehicle, nil
 }
 
 func (r *vehicleRepository) Update(vehicle *model.Vehicle) error {

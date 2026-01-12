@@ -12,9 +12,11 @@ type DriverRepository interface {
 	FindByID(id uuid.UUID) (*model.Driver, error)
 	FindByUserID(userID uuid.UUID) (*model.Driver, error)
 	FindByPhone(phone string) (*model.Driver, error)
+	AttachUser(driverID, userID uuid.UUID) error
 	FindPending() ([]model.Driver, error)
 	Update(driver *model.Driver) error
 	UpdateStatus(id uuid.UUID, status string) error
+	SetOnline(driverID uuid.UUID, isOnline bool) error
 	Delete(id uuid.UUID) error
 }
 
@@ -44,7 +46,8 @@ func (r *driverRepository) FindByID(id uuid.UUID) (*model.Driver, error) {
 
 func (r *driverRepository) FindByUserID(userID uuid.UUID) (*model.Driver, error) {
 	var driver model.Driver
-	err := r.db.Where("user_id = ?", userID).First(&driver).Error
+	err := r.db.
+		Where("user_id = ?", userID).First(&driver).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
@@ -64,6 +67,12 @@ func (r *driverRepository) FindByPhone(phone string) (*model.Driver, error) {
 		return nil, err
 	}
 	return &driver, nil
+}
+
+func (r *driverRepository) AttachUser(driverID, userID uuid.UUID) error {
+	return r.db.Model(&model.Driver{}).
+		Where("id = ?", driverID).
+		Update("user_id", userID).Error
 }
 
 func (r *driverRepository) FindPending() ([]model.Driver, error) {
@@ -89,6 +98,16 @@ func (r *driverRepository) UpdateStatus(id uuid.UUID, status string) error {
 	return r.db.Model(&model.Driver{}).
 		Where("id = ?").
 		Update("status", status).Error
+}
+
+func (r *driverRepository) SetOnline(driverID uuid.UUID, isOnline bool) error {
+	return r.db.Model(&model.Driver{}).
+		Where("id = ?", driverID).
+		Updates(map[string]interface{}{
+			"is_online":  true,
+			"updated_at": gorm.Expr("NOW()"),
+		}).Error
+
 }
 
 func (r *driverRepository) Delete(id uuid.UUID) error {
