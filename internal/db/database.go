@@ -31,7 +31,6 @@ func ConnectDatabase(host, port, user, password, dbname string) {
 
 	fmt.Println("Database connection established")
 
-	// Auto migrate models
 	err = db.AutoMigrate(
 
 		&authModel.User{},

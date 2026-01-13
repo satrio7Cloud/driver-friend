@@ -26,8 +26,15 @@ func (r *AuthRoutes) RegisterRoutes(router *gin.RouterGroup) {
 		auth.POST("/login-admin", r.authController.LoginAdmin)
 
 		auth.POST("login-driver", r.authController.LoginDriver)
-		auth.POST("/driver/request-otp", r.authController.RequestDriverOTP)
-		auth.POST("driver/verify-otp", r.authController.VerifyDriverOTP)
+
+		auth.POST("/driver/request-otp",
+			middleware.OTPRateLimiterByPhone(),
+			r.authController.RequestDriverOTP,
+		)
+		auth.POST("driver/verify-otp",
+			middleware.OTPRateLimiterByPhone(),
+			r.authController.VerifyDriverOTP,
+		)
 
 		auth.POST("/register", r.authController.Register)
 		auth.POST(

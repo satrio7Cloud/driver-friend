@@ -13,37 +13,41 @@ var (
 	otpMu       sync.Mutex
 )
 
-func getOTPLimiter(key string) *rate.Limiter {
+func getOTPLimiterByPhone(key string) *rate.Limiter {
 	otpMu.Lock()
 	defer otpMu.Unlock()
 
 	limiter, exists := otpLimiters[key]
 	if !exists {
-		limiter = rate.NewLimiter(1.0/60.0, 1)
+		limiter = rate.NewLimiter(1.0/60.0, 1) // 1 request pe 60sec
 		otpLimiters[key] = limiter
 	}
 	return limiter
 }
 
-func OTPRateLimiter() gin.HandlerFunc {
+func OTPRateLimiterByPhone() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("user_id")
-		if !exists {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "Unauthorized",
+		var body struct {
+			Phone string `json:"phone"`
+		}
+
+		if err := c.ShouldBindJSON(&body); err != nil || body.Phone == "" {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "Phone is required",
 			})
 			return
 		}
 
-		key := userID.(string)
-		limiter := getOTPLimiter(key)
+		limiter := getOTPLimiterByPhone(body.Phone)
 
 		if !limiter.Allow() {
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
-				"message": "OTP request to fequent, please wait",
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": "OTP request to frequent, please wait",
 			})
 			return
 		}
+
+		c.Set("phone", body.Phone)
 		c.Next()
 	}
 }
